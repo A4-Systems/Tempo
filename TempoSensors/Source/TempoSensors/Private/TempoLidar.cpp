@@ -851,8 +851,8 @@ namespace
 		// same test as comparing angles (cosine is monotonic over [0, 180] degrees) without an acos
 		// per return, and the world-to-sensor normal transform is the inverse rotation and scale
 		// taken once rather than inverted per return.
-		const double CosMaxAngleOfIncidence = FMath::Cos(FMath::DegreesToRadians(Read.MaxAngleOfIncidence));
-		const double SinMaxAngleOfIncidence = FMath::Sin(FMath::DegreesToRadians(Read.MaxAngleOfIncidence));
+		const double CosMaxIncidence = FMath::Cos(FMath::DegreesToRadians(Read.MaxAngleOfIncidence));
+		const double SinMaxIncidence = FMath::Sin(FMath::DegreesToRadians(Read.MaxAngleOfIncidence));
 		// A pixel's point is depth * (1, X, -Y) at image plane location (X, Y), so stepping one
 		// column adds StepX to the second component and one row subtracts StepY from the third.
 		const FVector ColumnRayStep(0.0, Read.ImagePlanePixelStep.X, 0.0);
@@ -864,7 +864,7 @@ namespace
 
 		// H-outer, V-inner layout: each ParallelFor iteration owns a contiguous V-length stripe
 		// of every output array, so threads never share cache lines.
-		ParallelFor(Read.HorizontalBeams, [&Read, BeamSamples, CosMaxAngleOfIncidence, SinMaxAngleOfIncidence,
+		ParallelFor(Read.HorizontalBeams, [&Read, BeamSamples, CosMaxIncidence, SinMaxIncidence,
 			ColumnRayStep, RowRayStep, ImageWidth, ImageHeight, InverseCaptureRotation, InverseCaptureScale,
 			DistancesData, IntensitiesData, LabelsData, AzimuthsData, ElevationsData, ReflectivitiesData, ColorsData, ColorEncoding,
 			MediaPixels, ReturnMode, bDual, MinDetectableIntensity,
@@ -904,7 +904,7 @@ namespace
 				if (Row > 0) { AddNeighbor(2, -ImageWidth, -RowRayStep); }
 				if (Row < ImageHeight - 1) { AddNeighbor(3, ImageWidth, RowRayStep); }
 				FVector SurfaceNormal;
-				EstimateLidarSurfaceNormal(NearestPoint, Neighbors, LocalNormal, SinMaxAngleOfIncidence, SurfaceNormal);
+				EstimateLidarSurfaceNormal(NearestPoint, Neighbors, LocalNormal, SinMaxIncidence, SurfaceNormal);
 				const double CosAngleOfIncidence = FVector::DotProduct(SurfaceNormal, -RayDirectionUnit);
 				// A bump can face away from a beam whose surface faces it; it returns nothing then,
 				// not a negative intensity.
@@ -913,7 +913,7 @@ namespace
 				// The surface echo, as before participating media: none past the max angle of
 				// incidence or the max distance.
 				FTempoLidarEcho Surface;
-				if (CosAngleOfIncidence >= CosMaxAngleOfIncidence)
+				if (CosAngleOfIncidence >= CosMaxIncidence)
 				{
 					// The intersection depends only on the ray's direction, so the unit vector
 					// serves as the second point on the line.
